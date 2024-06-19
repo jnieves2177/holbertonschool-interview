@@ -1,45 +1,35 @@
 #!/usr/bin/python3
 """This script gets stats from a request"""
 
-import sys
+from collections import Counter
+from sys import stdin
 
-codes = {}
-status_codes = ['200', '301', '400', '401', '403', '404', '405', '500']
-count = 0
-size = 0
+
+line_number = 1
+total_file_size = 0
+status_code_counts = Counter()
 
 try:
-    for ln in sys.stdin:
-        if count == 10:
-            print("File size: {}".format(size))
-            for key in sorted(codes):
-                print("{}: {}".format(key, codes[key]))
-            count = 1
-        else:
-            count += 1
-
-        ln = ln.split()
+    for line in stdin:
+        if len(line) == 1:
+            break
 
         try:
-            size = size + int(ln[-1])
-        except (IndexError, ValueError):
+            status_code, file_size = line.split()[-2:]
+            total_file_size += int(file_size)
+            status_code_counts[int(status_code)] += 1
+        except ValueError:
             pass
 
-        try:
-            if ln[-2] in status_codes:
-                if codes.get(ln[-2], -1) == -1:
-                    codes[ln[-2]] = 1
-                else:
-                    codes[ln[-2]] += 1
-        except IndexError:
-            pass
+        if line_number % 10 == 0:
+            print('File size:', total_file_size)
+            for code, count in sorted(status_code_counts.items()):
+                print('{}: {}'.format(code, count))
 
-    print("File size: {}".format(size))
-    for key in sorted(codes):
-        print("{}: {}".format(key, codes[key]))
-
+        line_number += 1
 except KeyboardInterrupt:
-    print("File size: {}".format(size))
-    for key in sorted(codes):
-        print("{}: {}".format(key, codes[key]))
-    raise
+    pass
+finally:
+    print('File size:', total_file_size)
+    for code, count in sorted(status_code_counts.items()):
+        print('{}: {}'.format(code, count))
